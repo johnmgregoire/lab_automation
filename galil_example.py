@@ -1,5 +1,3 @@
-import sys
-import string
 import gclib
 from private_vars import galil_ip_str
 
@@ -19,8 +17,9 @@ c('SPD=32000') # Set speed, axis D, 32,000 cts/sec
 c('PRD=3000') # Position Relative axis D, 3000 cts
 c('BGD') # begin motion axis D
 
-c('PR ?') # query position
-c('TP')
+c('PR ?')
+c('TP') # query position
+c('TPD') # query position D
 
 
 c('HM') # set homing mode
