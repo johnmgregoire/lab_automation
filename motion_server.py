@@ -33,6 +33,10 @@ def motor_move(x_mm: float,axis: str,speed=None,mode='relative'):
     
     #example: move the motor 5mm to the positive direction:
     #motor_move(5,'x')
+    #example: move the motor to absolute 0 mm
+    #motor_move(5,'x',mode='absolute')
+    #home the motor at low speed (the distance is not used)
+    #motor_move(5,'x',mode='homing',speed=10000)
     
     #first we check if we have the right axis specified
     if axis in setupd['axis_id'].keys():
@@ -123,10 +127,14 @@ def disconnect():
 
 
 def query_all_axis_positions():
+    #this queries all axis positions
+    #example: query_all_axis_positions()
+    
     #first query the actual position
     ret = c('TP') # query position of all axis
     #now we need to map these outputs to the ABCDEFG... channels
     #and then map that to xyz so it is humanly readable
+    
     inv_axis_id = {d:v for v,d in setupd['axis_id'].items()}
     ax_abc_to_xyz = {l:inv_axis_id[l] for i,l in enumerate(setupd['axlett'])}
     pos = {axl:int(r) for axl,r in zip(setupd['axlett'],ret.split(', '))}
@@ -155,24 +163,38 @@ def query_moving():
             return {'motor_status':'moving'}
     return {'motor_status':'stopped'}
 
-def motor_off():
+def motor_off(axis):
         #sometimes it is useful to turn the motors off for manual alignment
         #this function does exactly that
         #It then returns the status
         #and the current position of all motors
-        cmd_seq = ['AB','MO']
+        
+        if axis in setupd['axis_id'].keys():
+            ax = setupd['axis_id'][axis]
+        else:
+            ret = query_moving()
+            ret.update(query_all_axis_positions())
+            return ret
+        
+        cmd_seq = ['AB','MO{}'.format(ax)]
         for cmd in cmd_seq:
             _ = c(cmd)
         ret = query_moving()
         ret.update(query_all_axis_positions())
         return ret
 
-def motor_on():
+def motor_on(axis):
         #sometimes it is useful to turn the motors back on for manual alignment
         #this function does exactly that
         #It then returns the status
         #and the current position of all motors
-        cmd_seq = ['AB','SH']
+        if axis in setupd['axis_id'].keys():
+            ax = setupd['axis_id'][axis]
+        else:
+            ret = query_moving()
+            ret.update(query_all_axis_positions())
+            return ret
+        cmd_seq = ['AB','SH{}'.format(ax)]
         for cmd in cmd_seq:
             _ = c(cmd)
         ret = query_moving()
