@@ -1,7 +1,7 @@
 # :sparkles: Lab automation with python :sparkles:
 This is to develop YACOS - yet another chemistry orchestration software. This tries to solve the problem of having multiple devices in an instrument that work at the same time with dangerous racing conditions by using asyncio and dedicated servers for all instruments. 
 ## Task servers
-Independent services, synchronization handled by client
+Independent services, synchronization handled by yacos main server with job shop sheduling via master list :dizzy_face:
 - XYZ Motion & IO
   - Report position :green_heart:
   - Move to position :green_heart:
