@@ -1,5 +1,5 @@
 # Lab automation with python
-
+This is to develop YACOS - yet another chemistry orchestration software or yet another chemOS. This tries to solve the problem of having multiple devices in an instrument that work at the same time with dangerous racing conditions by using asyncio and dedicated servers for all instruments. 
 ## Task servers
 Independent services, synchronization handled by client
 - Motion
