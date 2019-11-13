@@ -11,7 +11,7 @@ Independent services, synchronization handled by client
 - Electrochemistry
   - Data aquisition :green_heart:
   - Potentiostat control :yellow_heart:
-  - Broadcast live data :red_heart:
+  - Broadcast live data :heart:
   - Check status (idle, measuring) :yellow_heart:
 - Display
   - Dashboard :heart:
