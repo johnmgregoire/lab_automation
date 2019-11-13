@@ -1,18 +1,18 @@
-# Lab automation with python
+# :sparkles: Lab automation with python :sparkles:
 This is to develop YACOS - yet another chemistry orchestration software. This tries to solve the problem of having multiple devices in an instrument that work at the same time with dangerous racing conditions by using asyncio and dedicated servers for all instruments. 
 ## Task servers
 Independent services, synchronization handled by client
 - Motion
-  - Report position
-  - Move to position
-  - Abort motion
-  - Check status (ready, moving, locked)
+  - Report position :green_heart:
+  - Move to position :green_heart:
+  - Abort motion :green_heart:
+  - Check status (ready, moving, locked) :green_heart:
 - Measurement
-  - Signal input / output
-  - Data aquisition
-  - Potentiostat control
-  - Broadcast live data
-  - Check status (idle, measuring)
+  - Signal input / output :green_heart:
+  - Data aquisition :green_heart:
+  - Potentiostat control :yellow_heart:
+  - Broadcast live data :red_heart:
+  - Check status (idle, measuring) :yellow_heart:
 - Display
   - Dashboard
   - Live measurement view
