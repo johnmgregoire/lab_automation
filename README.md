@@ -8,7 +8,7 @@ Independent services, synchronization handled by yacos main server with job shop
   - Abort motion :green_heart:
   - Check status (ready, moving, locked) :green_heart:
   - Signal input / output :green_heart:
-- Electrochemistry
+- Electrochemistry with Garmry 1010E
   - Data aquisition :green_heart:
   - Potentiostat control :yellow_heart:
   - Broadcast live data :heart:
@@ -27,11 +27,12 @@ Independent services, synchronization handled by yacos main server with job shop
 - Writes automation parameters to disk
 
 ## Automation scheduler (client)
-- Executes experiment techniques in order
-- Control (start, stop now, stop after sample)
-- Writes scheduler state to disk
-- Packages data (rcp, exp, ana)
+- Executes experiment techniques in order :yellow_heart:
+- Control (start, stop now, stop after sample) :yellow_heart:
+- Writes scheduler state to disk :heart:
+- Packages data (rcp, exp, ana) :heart: -> curently dumps json
 
+## Hardware Setup
 
 Install gclib (provides python module)
 http://www.galil.com/sw/pub/all/rn/gclib.html
