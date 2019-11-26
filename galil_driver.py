@@ -3,12 +3,12 @@ import numpy as np
 import json
 import time
 
-setupd = {'count_to_mm':154.1133/985482.0,
+setupd = {'count_to_mm':{'A':1./3154.787, 'B':1./(6395.45), 'C':1./(6395.45), 'D': 1./(6397.95), 'u':154.1133/985482.0},
           'galil_ip_str' : '192.168.200.23',
-          'def_speed_count_sec':20000,
+          'def_speed_count_sec':10000,
           'max_speed_count_sec':25000,
           'ipstr':'192.168.200.23',
-          'axis_id':{'x':'D','y':'A','z':'B','s':'C','t':'E','u':'F'},
+          'axis_id':{'x':'D','y':'B','z':'C','s':'A','t':'E','u':'F'},
           'axlett':'ABCD'}
 
 class galil():
@@ -21,7 +21,7 @@ class galil():
         self.c = self.g.GCommand  # alias the command callable
         self.cycle_lights = False
 
-    def motor_move(self, x_mm, axis, speed, mode):
+    def motor_move(self, x_mm, axis, speed, mode,stopping=True):
         # this function moves the motor by a set amount of milimeters
         # you have to specify the axis,
         # if no axis is specified this function throws an error
@@ -52,10 +52,13 @@ class galil():
         # check if the motors are moving if so return an error message
         # recalculate the distance in mm into distance in counts
         try:
-            float_counts = x_mm / setupd['count_to_mm']  # calculate float dist from steupd
+            print(setupd['count_to_mm'][ax])
+            float_counts = x_mm / setupd['count_to_mm'][ax]  # calculate float dist from steupd
+            print(setupd['count_to_mm'][ax])
+
             counts = int(np.floor(float_counts))  # we can only mode full counts
             # save and report the error distance
-            error_distance = setupd['count_to_mm'] * (float_counts - counts)
+            error_distance = setupd['count_to_mm'][ax] * (float_counts - counts)
 
             # check if a speed was upplied otherwise set it to standart
             if speed == None:
@@ -79,11 +82,13 @@ class galil():
             # here we decide if we move relative, home, or move absolute
             if mode not in ['relative', 'absolute', 'homing']:
                 raise cmd_exception
-
-            cmd_seq = ['AB',
-                       'MO',
-                       'SH',
-                       'SP{}={}'.format(ax, speed)]
+            if stopping:
+                cmd_seq = ['AB',
+                           'MO',
+                           'SH',
+                           'SP{}={}'.format(ax, speed)]
+            else:
+                cmd_seq = ['SP{}={}'.format(ax, speed)]
             if mode == 'relative':
                 cmd_seq.append('PR{}={}'.format(ax, counts))
             if mode == 'homing':
@@ -107,7 +112,8 @@ class galil():
                     'accepted_rel_dist': None,
                     'supplied_rel_dist': x_mm,
                     'err_dist': error_distance,
-                    'err_code': 0}
+                    'err_code': 0,
+                    'counts':counts}
         except:
             return {'moved_axis': None,
                     'speed': None,
@@ -121,7 +127,7 @@ class galil():
         # you have to specify the axis,
         # if no axis is specified this function throws an error
         # if no speed is specified we use the default slow speed
-        # as specified in the setupdict
+        # as specified in the setupdictm
 
         # example: move the motor 5mm to the positive direction:
         # motor_move(5,'x')
@@ -147,10 +153,10 @@ class galil():
         # check if the motors are moving if so return an error message
         # recalculate the distance in mm into distance in counts
         try:
-            float_counts = x_mm / setupd['count_to_mm']  # calculate float dist from steupd
+            float_counts = x_mm / setupd['count_to_mm'][ax]  # calculate float dist from steupd
             counts = int(np.floor(float_counts))  # we can only mode full counts
             # save and report the error distance
-            error_distance = setupd['count_to_mm'] * (float_counts - counts)
+            error_distance = setupd['count_to_mm'][ax] * (float_counts - counts)
 
             # check if a speed was upplied otherwise set it to standart
             if speed == None:
@@ -246,9 +252,9 @@ class galil():
 
         inv_axis_id = {d:v for v,d in setupd['axis_id'].items()}
         ax_abc_to_xyz = {l:inv_axis_id[l] for i,l in enumerate(setupd['axlett'])}
-        pos = {axl:int(r) for axl,r in zip(setupd['axlett'],ret.split(', '))}
+        pos = {axl:int(r)*setupd['count_to_mm'][axl] for axl,r in zip(setupd['axlett'],ret.split(', '))}
         #return the results through calculating things into mm
-        return {ax_abc_to_xyz[k]:p*setupd['count_to_mm'] for k,p in pos.items()}
+        return {ax_abc_to_xyz[k]:p for k,p in pos.items()}
 
     def query_axis(self,axis):
         #this only queries the position of a single axis
@@ -389,3 +395,13 @@ class galil():
         self.motor_stop()
         self.g.GClose()
         return {'shutdown'}
+
+
+'''
+some examples 
+
+m = galil()
+
+
+
+'''
