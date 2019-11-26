@@ -3,6 +3,7 @@ import comtypes.client as client
 import pickle
 import os
 import collections
+import numpy as np
 setupd = {'path_to_gamrycom': r'C:\Program Files (x86)\Gamry Instruments\Framework\GamryCOM.exe',
           'temp_dump': r'C:\Users\hte\Documents\lab_automation\temp'}
 
@@ -93,6 +94,8 @@ class gamry():
     def measure(self, sigramp):
         print('Opening Connection')
         ret = self.open_connection()
+        self.pstat.SetIERange(8)
+
         print(ret)
         # push the signal ramp over
         print('Pushing')
@@ -124,6 +127,21 @@ class gamry():
 
     def dump_data(self):
         pickle.dump(self.data, open(os.path.join(setupd['temp_dump'], self.instance_id)))
+
+    def signal_array(self, Cycles: int, SampleRate: float, arr):
+        arr = np.array(arr).tolist()
+        # setup the experiment specific signal ramp
+        if len(arr)>262143:
+            raise tooLongMeasurementError
+
+        sigramp = client.CreateObject("GamryCOM.GamrySignalArray")
+        sigramp.Init(self.pstat, Cycles, SampleRate, len(arr), arr, self.GamryCOM.PstatMode)
+        # measure ... this will do the setup as well
+        self.measure(sigramp)
+        return {'measurement_type': 'potential_ramp',
+                'parameters': {'Vinit': Cycles, 'Vfinal': SampleRate, 'SampleRate': SampleRate, 'Profile': arr},
+                'data': np.array(self.data).tolist()}
+
 
     def potential_ramp(self, Vinit: float, Vfinal: float, ScanRate: float, SampleRate: float):
         # setup the experiment specific signal ramp
@@ -158,3 +176,118 @@ class gamry():
                                'ScanFinal':ScanFinal, 'HoldTime0':HoldTime0, 'HoldTime1':HoldTime1,
                      'HoldTime2':HoldTime2, 'SampleRate':SampleRate, 'Cycles':Cycles},
                 'data': self.data}
+
+    def eis(self,start_freq,end_freq,points,pot_offset=0):
+        Zreal, Zimag, Zsig, Zphz, Zfreq = [], [], [], [], []
+        is_on = False
+        self.pstat.Open()
+        for f in np.logspace(np.log10(start_freq), np.log10(end_freq), points):
+
+            self.dtaqcpiv = client.CreateObject('GamryCOM.GamryDtaqEis')
+            self.dtaqcpiv.Init(self.pstat, f, 0.05, 0.5, 20)
+            self.dtaqcpiv.SetCycleMin(100)
+            self.dtaqcpiv.SetCycleMax(50000)
+
+            if not is_on:
+                self.pstat.SetCell(self.GamryCOM.CellOn)
+                is_on = True
+            self.dtaqsink = GamryDtaqEvents(self.dtaqcpiv)
+
+            connection = client.GetEvents(self.dtaqcpiv, self.dtaqsink)
+
+            try:
+                self.dtaqcpiv.Run(True)
+            except Exception as e:
+                raise gamry_error_decoder(e)
+            if f < 10:
+                client.PumpEvents(10)
+            if f>1000:
+                client.PumpEvents(0.1)
+            if f<1000:
+                client.PumpEvents(1)
+
+            Zreal.append(self.dtaqsink.dtaq.Zreal())
+            Zimag.append(self.dtaqsink.dtaq.Zimag())
+            Zsig.append(self.dtaqsink.dtaq.Zsig())
+            Zphz.append(self.dtaqsink.dtaq.Zphz())
+            Zfreq.append(self.dtaqsink.dtaq.Zfreq())
+            print(self.dtaqsink.dtaq.Zfreq())
+            del connection
+        self.pstat.SetCell(self.GamryCOM.CellOff)
+        self.pstat.Close()
+        return {'measurement_type': 'eis',
+                'parameters': {'tart_freq':start_freq,'end_freq':end_freq,'points':points,'pot_offset':pot_offset},
+                'data': [Zreal,Zimag,Zfreq]}
+
+    def ocv(self,start_freq,end_freq,points,pot_offset=0):
+        Zreal, Zimag, Zsig, Zphz, Zfreq = [], [], [], [], []
+        is_on = False
+        self.pstat.Open()
+        if offset != 0:
+            self.pstat.SetVchOffsetEnable(True)
+            if self.pstat.VchOffsetEnable():
+                self.poti.pstat.SetVchOffset(pot_offset)
+            else:
+                print('Have offset but could not enable')
+        for f in np.logspace(np.log10(start_freq), np.log10(end_freq), points):
+
+            self.dtaqcpiv = client.CreateObject('GamryCOM.GamryDtaqEis')
+            self.dtaqcpiv.Init(self.pstat, f, 0.1, 0.5, 20)
+            self.dtaqcpiv.SetCycleMin(100)
+            self.dtaqcpiv.SetCycleMax(50000)
+
+            if not is_on:
+                self.pstat.SetCell(self.GamryCOM.CellOn)
+                is_on = True
+            self.dtaqsink = GamryDtaqEvents(self.dtaqcpiv)
+
+            connection = client.GetEvents(self.dtaqcpiv, self.dtaqsink)
+
+            try:
+                self.dtaqcpiv.Run(True)
+            except Exception as e:
+                raise gamry_error_decoder(e)
+            if f < 10:
+                client.PumpEvents(10)
+            else:
+                client.PumpEvents(1)
+
+            Zreal.append(self.dtaqsink.dtaq.Zreal())
+            Zimag.append(self.dtaqsink.dtaq.Zimag())
+            Zsig.append(self.dtaqsink.dtaq.Zsig())
+            Zphz.append(self.dtaqsink.dtaq.Zphz())
+            Zfreq.append(self.dtaqsink.dtaq.Zfreq())
+            print(self.dtaqsink.dtaq.Zfreq())
+            del connection
+        self.pstat.SetCell(self.GamryCOM.CellOff)
+        self.pstat.Close()
+        return {'measurement_type': 'eis',
+                'parameters': {'tart_freq':start_freq,'end_freq':end_freq,'points':points,'pot_offset':pot_offset},
+                'data': [Zreal,Zimag,Zfreq]}
+#exaple:
+'''
+import numpy as np
+poti = gamry()
+ret = poti.signal_array(1,0.0001,np.sin(np.linspace(0,np.pi*5,1000)).tolist())
+plt.plot(np.array(ret['data'])[:,1],np.array(ret['data'])[:,3])
+plt.show()
+#crazyspike
+arr = [0 if not 400<i<500 else 1 for i in range(1000)]
+ret_75 = poti.signal_array(1,7.5*10**-6,arr)
+ret_5 = poti.signal_array(1,5*10**-6,arr)
+ret_2 = poti.signal_array(1,2*10**-6,arr)
+ret_18 = poti.signal_array(1,1.8*10**-6,arr)
+ret_17 = poti.signal_array(1,1.7*10**-6,arr)
+
+plt.plot(np.array(ret_75['data'])[:,3],'o',label='7.5mus',alpha=0.2)
+plt.plot(np.array(ret_5['data'])[:,3],'o',label='5mus',alpha=0.2)
+plt.plot(np.array(ret_2['data'])[:,3],'o',label='2mus',alpha=0.2)
+plt.plot(np.array(ret_18['data'])[:,3],'o',label='1.8mus',alpha=0.2)
+plt.plot(np.array(ret_17['data'])[:,3],'o',label='1.7mus',alpha=0.2)
+
+plt.legend()
+plt.xlabel('step')
+plt.ylabel('Current [A]')
+plt.show()
+
+'''
