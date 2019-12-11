@@ -103,6 +103,26 @@ def pulse(Cycles: int, SampleRate: float, arr: list,blockd: dict):
                                'arr': arr_str}).json()
     return res_echem
 
+
+def pump_on():
+    res_io = requests.get('{}/io/set/digital_out_on'.format(motion_url),
+                       params={'port':4}).json()
+    return str(res_io)
+
+def pump_off():
+    res_io = requests.get('{}/io/set/digital_out_off'.format(motion_url),
+                       params={'port':4}).json()
+    return str(res_io)
+
+def pump_forward():
+    res_io = requests.get('{}/io/set/digital_out_off'.format(motion_url),
+                       params={'port':7}).json()
+    return str(res_io)
+
+def pump_backward():
+    res_io = requests.get('{}/io/set/digital_out_on'.format(motion_url),
+                       params={'port':7}).json()
+
 def light_on(port=0):
     res_io = requests.get('{}/io/set/digital_out_on'.format(motion_url),
                        params={'port':port}).json()
