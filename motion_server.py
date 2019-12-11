@@ -19,12 +19,15 @@ class move_modes(str, Enum):
     absolute = "absolute"
 
 @app.get("/motor/set/move")
-def move(x_mm: float, axis: str, speed: int = None, mode: move_modes = 'relative'):
+def move(x_mm: float, axis: str, speed: int = None, mode: move_modes = 'relative', stopping: bool = True):
     """Move a apecified {axis} by {x_mm} distance at {speed} using {mode} i.e. relative"""
     #http://127.0.0.1:8001/motor/set/move?x_mm=-20&axis=x
+
+    #stopping is currently not working ... calling two motors at the same time will stop one motion
     retc = return_class(measurement_type = 'motion_command',
                         parameters =  {'command':'move_axis',
-                                       'parameters':{'x_mm': x_mm, 'axis': axis, 'speed': speed, 'mode': mode}},
+                                       'parameters':{'x_mm': x_mm, 'axis': axis, 'speed': speed, 'mode': mode,
+                                                     'stopping':stopping}},
                         data = motion.motor_move(x_mm, axis, speed, mode))
     return retc
 
