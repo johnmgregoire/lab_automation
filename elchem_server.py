@@ -49,8 +49,6 @@ def shutdown_event():
     loop.close()
     return {'shutdown'}
 
-
-
 if __name__ == "__main__":
     poti = gamry()
     # makes this runnable and debuggable in VScode
