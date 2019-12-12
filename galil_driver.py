@@ -2,14 +2,14 @@ import gclib
 import numpy as np
 import json
 import time
-
-setupd = {'count_to_mm':{'A':1./3154.787, 'B':1./(6395.45), 'C':1./(6395.45), 'D': 1./(6397.95), 'u':154.1133/985482.0},
+#bla
+setupd = {'count_to_mm':{'A':1./3154.787, 'B':1./(6395.45), 'C':1./(6395.45), 'D': 1./(6397.95)},
           'galil_ip_str' : '192.168.200.23',
           'def_speed_count_sec':10000,
           'max_speed_count_sec':25000,
           'ipstr':'192.168.200.23',
           'axis_id':{'x':'D','y':'B','z':'C','s':'A','t':'E','u':'F'},
-          'axlett':'ABCD'}
+          'axlett':'ABCD'} #TODO: utomte this as a axlett
 
 class galil():
     def __init__(self):
